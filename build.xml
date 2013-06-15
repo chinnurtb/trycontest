@@ -1,0 +1,222 @@
+<project name="ipinyoucontest" default="usage" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+	
+    <import file="common-build.xml"/>
+    <!-- 3rd party libraries for compilation -->
+    <property name="lib" location="lib" />
+    
+    <!-- source files -->
+    <property name="src.dir" location="src/java" />
+    
+    <!-- test files -->
+    <property name="test.dir" location="src/test"/>
+
+    <!-- Destination for distribution files (demo WAR, src distro, etc.) -->
+    <property name="dist" location="dist" />
+    
+    <!-- bin file -->
+    <property name="bin" location="bin" />
+    
+    <!-- deploy file -->
+    <property name="deploy" location="deploy" />
+
+    <!-- test report -->
+    <property name="testreportdir" location="testreportdir"/>
+
+    <!-- coverage report -->
+    <property name="coverage.dir" location="cobertura"/>
+
+    <!-- Updater bin name -->
+    <property name="MainDriver.bin" value="bid"/>
+    <!-- Updater class name -->
+    <property name="MainDriver.class" value="com.myhexin.HelloWorld"/>
+
+    <target name="usage"    description="Prints out instructions">
+        <echo message="Welcome to the ipinyoucontest project!" />
+        <echo message="Use 'ant clean' to clean compiled files." />
+        <echo message="Use 'ant compile' to compile the source code." />
+        <echo message="Use 'ant jar' to build the project JAR files." />
+        <echo message="Use 'ant dist' to build install package."/>
+        <echo message="Use 'ant junit' to run unit tests." />
+        <echo message="Use 'ant MainDriver' to get the MainDriver which is executable." />
+        <echo message="Use 'ant coverage-report' to run coverage tests." /> 
+    </target>
+
+    <!-- test if we need check out lib from other svn path -->
+    <property name="svn_dst_path" value="lib"/>
+    <available file="${svn_dst_path}/junit-4.5.jar" property="3rd.jar.exists" />
+    <!-- the command of checking other lib -->
+
+    <target name="jar-depend" unless="3rd.jar.exists">
+        <mkdir dir="${svn_dst_path}"/>
+    </target>
+    <!-- The compilation classpath -->
+    <path id="compile.classpath">
+        <fileset dir="${lib}">
+            <include name="*.jar" />
+        </fileset>
+    </path>
+
+    <!-- the dependency jar -->
+    <pathconvert property="3rdParty.jars" pathsep=" ">
+        <path refid="compile.classpath" />
+        <flattenmapper />
+    </pathconvert>
+
+    <!-- Compile the project. -->
+    <target name="compile" depends="jar-depend" description="Compile the source code.">
+        <myhexin-javac destdir="${dest}/myhexin"  classpathref="compile.classpath"> 
+            <src path="${src.dir}" />
+        </myhexin-javac>
+    </target>
+
+    <!-- Creates the ipinyoucontest jar files. -->
+    <target name="jar"
+          description="Creates the ipinyoucontest JAR Distribution file."
+          depends="compile">
+        <myhexin-jar destfile="${bin}/${fullname}-${version}.jar">
+            <fileset dir="${dest}/myhexin" />
+        </myhexin-jar>
+    </target>
+
+    <!-- Create MainDriver which is executable file. -->
+    <target name="MainDriver"
+        description="Create MainDriver which is executable file."
+        depends="compile">
+         <jar jarfile="${bin}/${MainDriver.bin}-${version}.jar" basedir="${dest}/myhexin" >
+         <fileset dir="data" includes="**/**" /> 
+         <fileset dir="conf"  /> 
+         <zipfileset src ="${lib}/commons-collections-3.2.1.jar" excludes="META-INF/*"/>
+         <zipfileset src="${lib}/commons-codec-1.4.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/commons-configuration-1.6.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/commons-httpclient-3.1.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/commons-lang-2.4.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/junit-4.8.2.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/log4j-1.2.16.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/slf4j-api-1.6.1.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/slf4j-log4j12-1.6.1.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/mysql-connector-java-5.1.8.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/ojdbc14-10.2.0.3.0.jar" excludes="META-INF/*" /> 
+         <zipfileset src="${lib}/commons-logging-1.1.1.jar" excludes="META-INF/*" /> 
+         <manifest>   
+             <attribute  name="Main-Class"   value="${MainDriver.class} "/>   
+             <attribute name="Class-Path" value="${3rdParty.jars} "/>  
+         </manifest>   
+         </jar>
+         <!--<copy todir="${bin}">
+            <fileset dir="conf" includes="**"/>
+         </copy> -->
+    </target>
+
+    <!-- Creates the ipinyoucontest dist file. -->
+
+    <target name="dist" 
+        description="Creates the ipinyoucontest distribution files."
+        depends="jar, MainDriver"> 
+        <copy todir="${dist}/${fullname}-${version}" >
+            <fileset dir="." 
+                    includes="conf/** " />
+            <fileset dir="." 
+                    includes="data/** " />
+            <fileset dir="."
+                    includes="${fullname}-${version}.jar" />
+            <fileset dir="./src"
+                    includes="scripts/**" />
+            <fileset dir="."
+                    includes="bin/**" />
+        </copy>
+    </target> 
+    <!-- Clean: cleans compiled files and other temporary artifacts. -->
+    <target name="clean" depends="clean-contrib"
+        description="Cleans compiled files and other temporary artifacts.">
+        <delete dir="${dest}" />
+        <echo> ${dest}</echo>
+        <delete dir="${dist}" />
+        <echo>${dist}</echo>
+        <delete dir="${bin}" />
+        <echo>${bin}</echo>
+        <delete dir="${deploy}" />
+        <echo>${deploy}</echo>
+        <delete dir="cobertura"/>
+        <delete dir="${testreportdir}"/>
+        <delete file="cobertura.ser"/> 
+    </target>
+
+    <!-- unit class path -->
+    <path id="test.compile.classpath">
+        <path refid="compile.classpath" />
+        <pathelement location="${dest}/myhexin"/>
+    </path>
+
+    <!-- Compile unit tests. -->
+    <target name="compileTests"
+        description="Compile unit tests."
+        depends="compile">
+
+        <mkdir dir="${dest}/tests" />
+        <myhexin-javac 
+            destdir="${dest}/tests"
+            classpathref="test.compile.classpath">
+            <src path="${test.dir}" />
+        </myhexin-javac>
+    </target>
+
+    <!-- run junit test -->
+    <target name="junit" depends="compileTests">
+        <junit printsummary="yes">
+            <classpath>
+                <path location="${dest}/tests"/>
+                <path refid="test.compile.classpath"/> 
+            </classpath>
+
+            <batchtest fork="yes">
+                <fileset dir="${test.dir}"  includes="**/*Test.java"/>
+            </batchtest>
+        </junit>
+    </target>
+
+    <!-- coverage -->
+    <taskdef classpathref="compile.classpath" resource="tasks.properties" />
+
+    <target name="instrument" depends="compileTests">
+
+        <cobertura-instrument todir="build/instrumented-classes">
+        <fileset dir="build/myhexin">
+          <include name="**/*.class"/>
+        </fileset>
+        <fileset dir="build/tests">
+          <include name="**/*.class"/>
+        </fileset>
+
+      </cobertura-instrument>
+    </target>
+
+    <target name="cover-test" depends="instrument">
+        <mkdir dir="${testreportdir}" />
+        <junit dir="./" failureproperty="test.failure" printSummary="yes" 
+            fork="true" haltonerror="true">
+            <!-- Normally you can create this task by copying your existing JUnit
+         target, changing its name, and adding these next two lines.
+         You may need to change the locations to point to wherever 
+         you've put the cobertura.jar file and the instrumented classes. -->
+            <classpath location="cobertura.jar"/>
+            <classpath location="build/instrumented-classes"/>
+            <classpath>
+                <fileset dir="${lib}">
+                    <include name="*.jar" />
+                </fileset>
+                <pathelement path="build/myhexin" />
+                <pathelement path="build/tests" />
+            </classpath>
+            <batchtest todir="${testreportdir}">
+                <fileset dir="src/test">
+                    <include name="**/*.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+    <target name="coverage-report" depends="cover-test">
+
+         <cobertura-report format="xml"  srcdir="src/jvm" destdir="cobertura"/>
+     </target>
+
+</project>

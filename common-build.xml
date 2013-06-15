@@ -1,0 +1,231 @@
+<project name="common" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+  <description>
+    This file is designed for importing into a main build file, and not intended
+    for standalone use.
+  </description>
+
+  <dirname file="${ant.file.common}" property="common.dir"/>
+  
+  <!-- Initialize property values: allow easy customization via build.properties -->
+  <property file="build.properties" />
+
+  <property name="Name" value="MyHexin" />
+
+  <property name="name" value="${ant.project.name}"/>
+
+  <tstamp>
+    <format property="year" pattern="yyyy"/>
+    <format property="DSTAMP" pattern="yyyy-MM-dd"/>
+    <format property="TSTAMP" pattern="HH:mm:ss"/>
+    <!-- datetime format that is safe to treat as part of a dotted version -->
+    <format property="dateversion" pattern="yyyy.MM.dd.HH.mm.ss" />
+  </tstamp>
+
+  <!-- default arguments to pass to jvm executing tests -->
+  <property name="args" value="" />
+
+  <!-- Example directory -->
+  <property name="example" value="${common.dir}/example" />
+
+  <!-- Java Version we are compatible with -->
+  <property name="java.compat.version" value="1.6" />
+
+  <!--
+       This can be any string value that does not include spaces
+       This will be used when creating build artifact file names.
+
+       By default, this should be set to "X.Y.N-dev" where X.Y.N is
+       "1 greater" then the last version released (on this branch).
+    -->
+  <property name="version" value="1.0.0" />
+  
+  <!-- StockSelection Specification Version -->
+  <!--
+       This will be used in the Manifest file, and therefore must
+       match the pattern "digit+{.digit+}*"
+       
+       By default, this should be set to "X.Y.M.${dateversion}"
+       where X.Y.M is the last version released (on this branch).
+    -->
+  <property name="specversion" value="1.0.0.${dateversion}" />
+
+  
+    <!-- Type of checksum to compute for distribution files -->
+  <property name="checksum.algorithm" value="md5" />
+  
+  <property name="fullname" value="${ant.project.name}"/>
+  <property name="fullnamever" value="myhexin-${ant.project.name}-${version}"/>
+
+  <!-- Destination for compiled classes and binaries -->
+  <property name="dest" value="build" />
+
+  <!-- Javadoc properties -->
+  <property name="javadoc.years" value="2006 - ${year}" />
+  <property name="javadoc.access" value="protected"/>
+  <property name="javadoc.link.java"
+            value="http://java.sun.com/j2se/1.5.0/docs/api/"/>
+  <property name="javadoc.link.junit"
+            value="http://junit.sourceforge.net/javadoc/"/>
+  <property name="javadoc.link.lucene"
+            value="http://lucene.apache.org/java/2_9_3/api/all/"/>
+  <property name="javadoc.packages" value="com.myhexin.*"/>
+  <property name="build.docs" value="${dest}/docs"/>
+  <property name="build.javadoc" value="${common.dir}/${build.docs}/api"/>
+
+  <!-- Cobertura properties -->
+  <property name="instrumented.dir" value="instrumented"/>
+  <property name="coverage.dir" value="${dest}/coverage"/>
+  <property name="coverage.xml.dir" value="${coverage.dir}/cobertura-xml"/>
+  <property name="coverage.summaryxml.dir" value="${coverage.dir}/cobertura-summary-xml"/>
+  <property name="coverage.html.dir" value="${coverage.dir}/cobertura-html"/>
+    
+  <!-- JUnit properties -->
+  <property name="junit.includes" value="**/Test*.java,**/*Test.java"/>
+  <property name="junit.output.dir" location="${common.dir}/${dest}/test-results"/>
+  <property name="junit.reports" location="${common.dir}/${dest}/test-results/reports"/>
+  <property name="junit.formatter" value="xml"/>
+
+  <property name="myhexin_index_version" value="0.8.0"/>
+  <!-- The version number to assign to the Maven artifacts. -->
+  <property name="maven_version" value="0.8.0-SNAPSHOT"/>
+
+   
+  <!-- Macro for compilation -->
+  <macrodef name="myhexin-javac">
+    <attribute name="destdir" />
+    <attribute name="classpathref" />
+    <element name="nested" optional="true" implicit="true" />
+    <sequential>
+      <mkdir dir="@{destdir}" />
+      <javac destdir="@{destdir}"
+             target="${java.compat.version}"
+             source="${java.compat.version}"
+             debug="on"
+             encoding="utf8"
+             sourcepath=""
+	     includeantruntime="no"
+             classpathref="@{classpathref}">
+         <nested />
+      </javac>
+    </sequential>
+  </macrodef>
+
+  <!-- Macro for building Jars -->
+  <macrodef name="myhexin-jar">
+    <attribute name="destfile" />
+    <attribute name="basedir" default="." />
+    <attribute name="includes" default="com/myhexin/**" />
+    <attribute name="excludes" default="" />
+    <attribute name="manifest" default="${common.dir}/${dest}/META-INF/MANIFEST.MF" />
+    <element name="nested" optional="true" implicit="true" />
+    <sequential>
+      <jar destfile="@{destfile}"
+           basedir="@{basedir}"
+           includes="@{includes}"
+           excludes="@{excludes}"
+	   filesetmanifest="skip">
+	   <!--
+           manifest="@{manifest}">
+	   <metainf dir="${common.dir}" includes="LICENSE.txt,NOTICE.txt"/>
+	   -->
+        <nested />
+      </jar>
+    </sequential>
+  </macrodef>
+
+  <!-- Macro for building checksum files
+       This is only needed until the "format" option is supported
+       by ant's built in checksum task
+   -->
+  <macrodef name="myhex-checksum">
+    <attribute name="file"/>
+    <!-- NOTE: we use the value of @{file} in the names any properties
+         set because macro's don't have variables, and otherwise we
+         wouldn't be able to checksum more then one file per build
+      -->
+    <sequential>
+     <checksum file="@{file}"
+               property="@{file}.sum"
+               algorithm="${checksum.algorithm}" />
+     <basename file="@{file}" property="@{file}.base" />
+     <concat destfile="@{file}.${checksum.algorithm}"
+             force="yes"
+             append="false"
+             fixlastline="yes">
+       <header trimleading="yes">${@{file}.sum}  </header>
+       <!-- empty fileset to trick concat -->
+       <fileset dir="." excludes="**" />
+       <footer trimleading="yes">${@{file}.base}
+       </footer>
+     </concat>
+    </sequential>
+  </macrodef>
+
+
+  <macrodef name="contrib-crawl">
+    <attribute name="target" default=""/>
+    <attribute name="failonerror" default="true"/>
+    <sequential>
+      <subant target="@{target}" failonerror="@{failonerror}">
+        <fileset dir="."
+                 includes="contrib/*/build.xml"
+        />
+      </subant>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="invoke-javadoc">
+    <element name="sources" optional="yes"/>
+    <attribute name="destdir"/>
+  	<attribute name="title" default="${Name} ${version} API (${specversion})"/>
+    <sequential>
+      <javadoc
+          packagenames="com.myhexin.*"
+          failonerror="true"
+          destdir="@{destdir}"
+          access="${javadoc.access}"
+          encoding="utf-8"
+          author="true"
+          version="true"
+          use="true"
+          source="${ant.java.version}"
+          link="${javadoc.link.java}"
+          windowtitle="${Name} ${version} API"
+          doctitle="@{title}"
+          bottom="Copyright &amp;copy; ${year} Hexin Flush Network Information Ltd. All Rights Reserved.">
+        <tag name="todo" description="To Do:"/>
+        <tag name="uml.property" description="UML Property:"/>
+      	<link offline="true" packagelistLoc="${build.javadoc}"/>
+        <link href="${javadoc.link.java}"/>
+        <link href="${javadoc.link.junit}"/>
+
+        <sources />
+
+        <classpath refid="javadoc.classpath"/>
+      </javadoc>
+   </sequential>
+  </macrodef>
+
+  <target name="clean-contrib"
+	          description="Cleans all contrib modules and their tests">
+	<contrib-crawl target="clean"/>
+  </target>
+
+  <target name="build-contrib"
+          description="Builds all contrib modules and their tests">
+    <contrib-crawl target="build"/>
+  </target>
+
+  <target name="test-contrib" depends="build-contrib">
+    <contrib-crawl target="test" failonerror="true"/>
+  </target>
+
+  <target name="dist-contrib" description="Make the contribs ready for distribution">
+  	<contrib-crawl target="dist" failonerror="true" />
+  </target>
+
+  <target name="example-contrib" description="Tell the contrib to add their stuff to examples">
+  	<contrib-crawl target="example" failonerror="true" />
+  </target>
+
+</project>

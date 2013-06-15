@@ -1,0 +1,16 @@
+==简介==
+
+==开发==
+我们将程序所有的文件都放到目录conf data下面。 在主程序中读取相关文件的时候只需要提供文件名即可。
+参考
+    src/java/com/ipingyou/contest/algorithm/DemoBid.java::readModelFileToLines
+这里有一个假设conf目录下的文件名必须于data下的文件名不一样
+
+===编译===
+ant clean
+ant MainDriver
+ant junit
+===运行===
+java -cp bin/bid-1.0.0.jar  com.ipinyou.contest.algorithm.DemoBid
+
+
