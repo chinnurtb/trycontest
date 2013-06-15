@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <classpathentry excluding="conf/|src/java/com/ipingyou/contest/algorithm/|src/java/com/ipingyou/contest/|src/java/com/ipingyou/|src/java/com/|src/|lib/|data/|build/myhexin/|build/|src/java/|src/java/" kind="src" path=""/>
+    <classpathentry kind="src" path="src/java"/>
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+    <classpathentry kind="output" path="bin"/>
+</classpath>
+

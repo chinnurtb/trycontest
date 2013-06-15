@@ -10,6 +10,9 @@ RTB的一个真实的实验。
 ant clean
 ant MainDriver
 ant junit
+
+如果用eclipse开发，将该项目import为一个general的项目，然后在项目的主目录下添加.project .classpath两个文件，文件的内容
+分别参考eclipse/project eclipse/classpath
 ===运行===
 java -cp bin/bid-1.0.0.jar  com.ipinyou.contest.algorithm.DemoBid
 
