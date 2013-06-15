@@ -22,6 +22,9 @@ public class DemoBid implements Algorithm{
 	@Override
 	public void init() {
         log.info("init....") ;
+        if ( model_file != null && conf_file != null){
+            //TODO
+        }
 		domains.addAll(
 				readModelFileToLines("model_file")
 		);
