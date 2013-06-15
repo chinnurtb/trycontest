@@ -8,13 +8,18 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class DemoBid implements Algorithm{
+    public static final Logger log = LoggerFactory.getLogger(DemoBid.class);
 
 	private Set<String> domains = new HashSet<String>();
 	
 	@Override
 	public void init() {
+        log.info("init....") ;
 		domains.addAll(
 				readModelFileToLines("model_file")
 		);
