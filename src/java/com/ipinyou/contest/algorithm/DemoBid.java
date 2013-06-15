@@ -17,6 +17,8 @@ public class DemoBid implements Algorithm{
 
 	private Set<String> domains = new HashSet<String>();
 	
+	private String model_file = null ;
+	private String conf_file = null ;
 	@Override
 	public void init() {
         log.info("init....") ;
@@ -70,5 +72,7 @@ public class DemoBid implements Algorithm{
        BidRequest bidRequest = new BidRequest() ;
        bidRequest.setDomain("HELLO") ;
        System.out.println(demo_bid.getBidPrice(bidRequest))  ;
+       bidRequest.setDomain("world") ;
+       System.out.println(demo_bid.getBidPrice(bidRequest)) ;
     }
 }
